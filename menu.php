@@ -716,7 +716,7 @@ class Item {
 		return
 			$this->get_url() == URI::current() or
 			$this->get_url() == URI::full() or
-			Str::is($this->get_url() . '*', URI::full());
+			Str::is(parse_url($this->get_url(), PHP_URL_PATH) . '*', parse_url(URI::full(), PHP_URL_PATH));
 	}
 
 	/**
