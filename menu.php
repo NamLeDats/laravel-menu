@@ -453,7 +453,11 @@ class ItemList {
 			$contents .= $item->render($options);
 		}
 
-		return str_repeat("\t", $render_depth - 1).MenuHTML::$list_element(PHP_EOL.$contents.PHP_EOL.str_repeat("\t", $render_depth - 1), $list_attributes).PHP_EOL;
+		// If start_depth is set, omit wrapping in list for items on level above or equal of start_depth
+		if(array_key_exists('start_depth', $options) && $options['start_depth'] > $options['current_depth'])
+			return $contents;
+		else
+			return str_repeat("\t", $render_depth - 1).MenuHTML::$list_element(PHP_EOL.$contents.PHP_EOL.str_repeat("\t", $render_depth - 1), $list_attributes).PHP_EOL;
 	}
 
 	/**
@@ -769,12 +773,20 @@ class Item {
 
 		extract($options);
 
+		$has_active_child = $this->has_active_child();
+
+		// Stop processing if current item is above start_depths and has no active childs
+		if(array_key_exists('start_depth', $options) && $options['start_depth'] > $options['current_depth'] && ! $has_active_child)
+		{
+			return '';
+		}
+
 		if($this->is_active())
 		{
 			$item_attributes = merge_attributes($item_attributes, array('class' => $active_class));
 		}
 
-		if($this->has_active_child())
+		if($has_active_child)
 		{
 			$item_attributes = merge_attributes($item_attributes, array('class' => $active_child_class));
 		}
@@ -784,6 +796,12 @@ class Item {
 		unset($children_options['item_attributes'], $children_options['item_element']);
 
 		$children = $this->has_children() ? PHP_EOL.$this->children->render($children_options).str_repeat("\t", $render_depth) : '';
+
+		// If start_depth is set, do not display items above
+		if(array_key_exists('start_depth', $options) && $options['start_depth'] > $options['current_depth'])
+		{
+			return $children.PHP_EOL.str_repeat("\t", $render_depth);
+		}
 
 		if($this->type == 'raw')
 		{
